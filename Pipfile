@@ -6,6 +6,9 @@ name = "pypi"
 [packages]
 pandas = "*"
 numpy = "*"
+pyarrow = "*"
+fastparquet = "*"
+mapply = "*"
 
 [dev-packages]
 
