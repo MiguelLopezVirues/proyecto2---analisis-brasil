@@ -9,6 +9,9 @@ numpy = "*"
 pyarrow = "*"
 fastparquet = "*"
 mapply = "*"
+levenshtein = "*"
+matplotlib = "*"
+seaborn = "*"
 
 [dev-packages]
 

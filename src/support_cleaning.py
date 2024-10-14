@@ -1,13 +1,15 @@
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+import Levenshtein as lev
+import re
+
 tqdm.pandas() 
 
 def normalize(s):
     """
     Function to normalize by:
     - Passing accented letters to accent-less.
-    - Replacing spaces.
     - Transforming to lowercase.
 
     Args:
@@ -22,65 +24,88 @@ def normalize(s):
         ("í", "i"),
         ("ó", "o"),
         ("ú", "u"),
-        ("ô","o"),
-        ("ç","c"),
-        ("ã","a"),
-
+        ("ô", "o"),
+        ("ç", "c"),
+        ("ã", "a"),
+        ("õ", "o"),
+        ("â", "a"),
+        ("ê", "e"),
+        ("î", "i"),
+        ("ù", "u"),
+        ("ä", "a"),
+        ("ë", "e"),
+        ("ï", "i"),
+        ("ö", "o"),
+        ("ü", "u"),
+        ("ÿ", "y"),
+        ("à", "a"),
+        ("è", "e"),
+        ("ì", "i"),
+        ("ò", "o"),
+        ("ù", "u"),
+        ("/","_"),
+        ("ñ ",""),
+        ("-","_"),
+        (" ","_"),
+        (".","_"),
+        ("(","_"),
+        (")","_"),
+        (",","_"),
     )
     for a, b in replacements:
-        s = s.lower().replace(a, b).replace(" ","_")
+        s = s.lower().replace(a, b)
+    
+    s = re.sub(r'_+', '_', s)
     return s
 
-def apply_fill(df, direction="both"):
 
-    # take just the first two columns to ensure proper output.
-    df[["column1","column2"]] = df.iloc[:,[0,1]].copy()
+def fill_categories(df_original):
+    df = df_original.iloc[:,[0,1]].copy()
+    column1, column2 = df.columns.to_list()
+    column1_column2_equivalences = df.value_counts().reset_index()
+    print(f"Full unique combinations: {column1_column2_equivalences.shape[0]}")
+    column1_column2_equivalences_unique_column2 = column1_column2_equivalences.drop_duplicates(subset=column2,keep=False)
+    print(f"Unique combinations of one {column2} to one {column1}: {column1_column2_equivalences_unique_column2.shape[0]}")
 
-    # create equivalences dict
-    equivalences = df[["column1","column2"]].value_counts().index.to_list()
-    equivalences_dict = {codigo: nome for codigo, nome  in equivalences}
-    reversed_equivalences_dict = {column2: column1 for column1, column2 in equivalences_dict.items()}
+    column1_column2_equivalences_unique_column1 = column1_column2_equivalences_unique_column2[[column1, column2]].values
 
-    # create filters to correct only rows where there are NaNs
-    column1_null = df["column1"].isna()
-    column2_null = df["column2"].isna()
+    equivalences_dict = {column2: column1 for column1, column2  in column1_column2_equivalences_unique_column1}
 
-    if direction == "both":
-        df.loc[column1_null & column2_null] = df.loc[column1_null & column2_null].progress_apply(
-            lambda row: fill_value_bidirectional(row['column1'], row['column2'], equivalences_dict, reversed_equivalences_dict),
-            axis=1,
-            result_type='expand'
-        )
-
-    elif direction == "right":
-        df.loc[column2_null] = df.loc[column2_null].progress_apply(
-            lambda row: fill_value_unidirectional(row['column1'], row['column2'], equivalences_dict, reversed_equivalences_dict, direction="right"),
-            axis=1,
-            result_type='expand'
-        )
-        
-    else:
-        df.loc[column1_null] = df.loc[column1_null].progress_apply(
-            lambda row: fill_value_unidirectional(row['column1'], row['column2'], equivalences_dict, reversed_equivalences_dict, direction="left"),
-            axis=1,
-            result_type='expand'
-        )
-
+    df[column1] = (df[column1]
+                    .fillna(df[column2]
+                    .map(equivalences_dict)))
+    
     return df
 
-# simplify
-def fill_value_bidirectional(colum_value1, colum_value2, equivalence_dict, reversed_equivalences_dict):
-
-    colum_value2 = equivalence_dict.get(colum_value1, np.nan)
-    colum_value1 = reversed_equivalences_dict.get(colum_value2, np.nan)
+def fill_categories_forward_backward_massive(df_original):
+    # forward
+    for column_idx in range(len(df_original.columns) - 1):
+        df_original.iloc[:,[column_idx,column_idx + 1]] = fill_categories_forward_backward(df_original.iloc[:,[column_idx,column_idx + 1]])
     
-    return colum_value1, colum_value2
+    # backward
+    df_reversed = df_original[df_original.columns[::-1]]
+    for column_idx in range(len(df_original.columns) - 1):
+        df_reversed.iloc[:,[column_idx,column_idx + 1]] = fill_categories_forward_backward(df_reversed.iloc[:,[column_idx,column_idx + 1]])
 
-def fill_value_unidirectional(colum_value1, colum_value2, equivalence_dict, reversed_equivalences_dict, direction="left"):
-
-    if direction == "right":
-        colum_value2 = equivalence_dict.get(colum_value1, np.nan)
-    else:
-        colum_value1 = reversed_equivalences_dict.get(colum_value2, np.nan)
+    df_original = df_reversed[df_reversed.columns[::-1]]
     
-    return colum_value1, colum_value2
+    return df_original
+
+def fill_categories_forward_backward(df_original):
+    df = df_original.iloc[:,[0,1]].copy()
+    df = fill_categories(df)
+    df_reversed = df[df.columns[::-1]]
+    df_reversed = fill_categories(df_reversed)
+    df = df_reversed[df_reversed.columns[::-1]]
+    return df
+
+
+def find_similar_values(column, distance=2):
+    similar_pairs = []
+    values = column.dropna().unique()  
+    
+    for i in range(len(values)):
+        for j in range(i + 1, len(values)):
+            if lev.distance(values[i], values[j]) <= distance:
+                similar_pairs.append((values[i], values[j]))
+    return similar_pairs
