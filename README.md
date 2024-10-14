@@ -60,7 +60,7 @@ scikit-learn
 - [Seaborn Documentation](https://seaborn.pydata.org/)  
 - [Scikit-learn Documentation](https://scikit-learn.org/stable/)  
 
-### Setting up the Environment with Pipenv
+#### Setting up the Environment with Pipenv
 
 Clone this repository by going to the desired folder with you command line and cloning the environment:
 ```bash
@@ -85,15 +85,15 @@ It is suggested to improve the efficiency of management units X and Y.
 
 ## 🔄 Next Steps
 
-- Improve the imputation of missing values.
-- Include additional analyses for other fiscal periods.
+- Polish ``fill_categories_forward_backward_massive()`` to fill in categorical NaNs.
+- Analyse patterns in missing values to potentially uncover insights about unprofessional public revenue management.
 - Explore advanced techniques for future revenue projections.
 
 ## 🤝 Contributions
 Contributions are welcome. If you wish to improve the project, open a pull request or an issue.
 
 ## ✒️ Authors
-[Your Name] - GitHub Profile
+Miguel López Virués - [GitHub Profile](https://github.com/MiguelLopezVirues)  
 
 
 ## 📜 License
