@@ -79,9 +79,7 @@ pip install -r requirements.txt
 ```
 
 ## 📊 Results and Conclusions
-We identified that categories A and B show the largest discrepancies between the forecast and actual amounts.
-Forecasts during November and December tend to be less accurate.
-It is suggested to improve the efficiency of management units X and Y.
+Check exploration.ipynb notebook.
 
 ## 🔄 Next Steps
 
