@@ -79,7 +79,7 @@ pip install -r requirements.txt
 ```
 
 ## 📊 Results and Conclusions
-Check ``exploration.ipynb`` notebook for conclusions and recommendations.
+Check ``exploration.ipynb``(notebooks/exploration.ipynb) notebook for conclusions and recommendations.
 
 ## 🔄 Next Steps
 
